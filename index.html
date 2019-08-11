@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>Conference Room Booking System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/2.1.1/fullcalendar.print.css" rel="stylesheet" media="print"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.js"></script>
+
+  
+  <script>
+   
+  $(document).ready(function() {
+   var calendar = $('#calendar').fullCalendar({
+   	
+    editable:true,
+    header:{
+     left:'prev,next today prevYear nextYear',
+     center:'title',
+     right:'month,agendaWeek,agendaDay'
+    },
+    timezone: 'UTC',
+    ignoreTimezone: false,
+    events: 'load.php',
+    selectable:true,
+    selectConstraint:'businessHours',
+    editable:true,
+    eventDurationEditable:true,
+    businessHours: 
+    [{
+  		dow: [1, 2, 3, 4, 5, 6 ], 
+  		start: '9:00', 
+  		end: '12:30', 
+	},
+{
+      dow: [1, 2, 3, 4, 5, 6 ], 
+      start: '13:00', 
+      end: '17:40', 
+      
+  }
+],
+    selectHelper:true,
+    weekNumbers: true,
+    contentHeight: 425,
+    allDayDefault:false,
+    allDay:false,
+    disableResizing: false,
+    minTime:'09:00:00',
+    maxTime:'17:40:00',
+    handleWindowResize: true,
+    eventStartEditable: true,
+    eventDurationEditable: true,
+    select: function(start, end, allDay)
+    {
+        if(start.isBefore(moment())) {
+        $('#calendar').fullCalendar('unselect');
+        return false;
+        }
+
+     var title = prompt("Enter Event Title");
+     if(title)
+     {
+				        var dateObj = new Date(start) /* Or empty, for today */
+				        //alert(dateObj);
+                dateIntNTZ = dateObj.getTime();
+                //alert(dateIntNTZ);
+                dateObjNTZ = new Date(dateIntNTZ);
+                var nd = dateObjNTZ.toISOString().slice(0, 19);
+                //alert(nd);
+
+                var dateObj1 = new Date(end) /* Or empty, for today */
+                dateIntNTZ1 = dateObj1.getTime();
+                dateObjNTZ1 = new Date(dateIntNTZ1);
+                var nd1 = dateObjNTZ1.toISOString().slice(0, 19);
+                //alert(nd1);
+
+
+      $.ajax({
+       url:"insert.php",
+       type:"POST",
+       data:{title:title, start:nd.replace('T', ' '), end:nd1.replace('T', ' ')},
+       success:function()
+       {
+        calendar.fullCalendar('refetchEvents');
+        alert("Added Successfully");
+       },
+      })
+     }
+    },
+    editable:true,
+    eventResize:function(event)
+    {
+     var start = $.fullCalendar.formatDate(event.start, "YYYY-MM-DD hh:mm:ss");
+     var end = $.fullCalendar.formatDate(event.end, "YYYY-MM-DD hh:mm:ss");
+     var title = event.title;
+     var id = event.id;
+     $.ajax({
+      url:"update.php",
+      type:"POST",
+      data:{title:title, start:start, end:end, id:id},
+      success:function(){
+       calendar.fullCalendar('renderEvent', event,true);
+       alert('Event Update');
+      }
+     })
+    },
+
+    eventDrop:function(event)
+    {
+    
+     var dateObj = new Date(event.start) /* Or empty, for today */
+				//alert(dateObj);
+                dateIntNTZ = dateObj.getTime();
+                //alert(dateIntNTZ);
+                dateObjNTZ = new Date(dateIntNTZ);
+                var nd = dateObjNTZ.toISOString().slice(0, 19);
+                //alert(nd);
+
+                var dateObj1 = new Date(event.end) /* Or empty, for today */
+                dateIntNTZ1 = dateObj1.getTime();
+                dateObjNTZ1 = new Date(dateIntNTZ1);
+                var nd1 = dateObjNTZ1.toISOString().slice(0, 19);
+                //alert(nd1);
+
+
+     var title = event.title;
+     var id = event.id;
+     $.ajax({
+      url:"update.php",
+      type:"POST",
+      data:{title:title, start:nd.replace('T', ' '), end:nd1.replace('T', ' '), id:id},
+      success:function()
+      {
+       calendar.fullCalendar('renderEvents',event,true);
+       alert("Event Updated");
+      }
+     });
+    },
+
+    eventClick:function(event)
+    {
+     if(confirm("Are you sure you want to remove it?"))
+     {
+      var id = event.id;
+      $.ajax({
+       url:"delete.php",
+       type:"POST",
+       data:{id:id},
+       success:function()
+       {
+        calendar.fullCalendar('refetchEvents');
+        alert("Event removed");
+       }
+      })
+     }
+    },
+	
+   });
+  });
+   
+  </script>
+
+  
+ </head>
+ <body>
+  <br />
+  <h2 align="center"><a href="#">Conference Room Booking System</a></h2>
+  <br />
+  <div class="container theme-showcase">
+   <div id="calendar"></div>
+  </div>
+  <br><br><br>
+ </body>
+</html>
